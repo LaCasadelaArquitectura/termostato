@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="#2563eb"/>
+
+  <!-- Thermometer body -->
+  <rect x="28" y="12" width="8" height="30" rx="4" fill="#ffffff"/>
+
+  <!-- Thermometer bulb -->
+  <circle cx="32" cy="46" r="7" fill="#ffffff"/>
+
+  <!-- Red mercury -->
+  <rect x="30" y="22" width="4" height="20" fill="#ef4444"/>
+  <circle cx="32" cy="46" r="5" fill="#ef4444"/>
+
+  <!-- Temperature marks -->
+  <line x1="36" y1="18" x2="40" y2="18" stroke="#e0e7ff" stroke-width="1.5"/>
+  <line x1="36" y1="24" x2="40" y2="24" stroke="#e0e7ff" stroke-width="1.5"/>
+  <line x1="36" y1="30" x2="40" y2="30" stroke="#e0e7ff" stroke-width="1.5"/>
+  <line x1="36" y1="36" x2="40" y2="36" stroke="#e0e7ff" stroke-width="1.5"/>
+
+  <!-- Snowflake accent -->
+  <g transform="translate(46, 16) scale(0.6)">
+    <path d="M0,-6 L0,6 M-6,0 L6,0 M-4,-4 L4,4 M-4,4 L4,-4"
+          stroke="#93c5fd" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

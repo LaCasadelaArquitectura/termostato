@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
+const REFRIGERANTS = ['R-407c', 'R-32', 'R-410A', 'R-134a', 'R-290'];
+
 const CASES = {
   A: { refrigerant: 'R-407c', tRoom: 24, tEvap: 0, correct: { C2: 30, C3: 15, C6: 3, C7: 1, C8: 2, d0: 2, d1: 10, d4: 5, F0: 30, F3: 1, A1: 30, A2: 0, A5: 1 }},
   B: { refrigerant: 'R-32', tRoom: 22, tEvap: -10, correct: { C2: 25, C3: 20, C6: 3, C7: 1, C8: 1, d0: 1, d1: 15, d4: 0, F0: 25, F3: 0, A1: 25, A2: -10, A5: 2 }},
@@ -9,6 +11,34 @@ const CASES = {
   D: { refrigerant: 'R-134a', tRoom: 8, tEvap: 5, correct: { C2: 15, C3: 0, C6: 1, C7: 0, C8: 0, d0: 4, d1: 20, d4: 0, F0: 15, F3: 1, A1: 15, A2: 5, A5: 3 }},
   E: { refrigerant: 'R-290', tRoom: -10, tEvap: -25, correct: { C2: 0, C3: -20, C6: 3, C7: 2, C8: 1, d0: 3, d1: 25, d4: -15, F0: 0, F3: 0, A1: 0, A2: -25, A5: 0 }},
   F: { refrigerant: 'R-134a', tRoom: 15, tEvap: 0, correct: { C2: 20, C3: 10, C6: 3, C7: 1, C8: 1, d0: 2, d1: 15, d4: 10, F0: 20, F3: 0, A1: 20, A2: 0, A5: 0 }}
+};
+
+// Función para generar un caso aleatorio
+const generateRandomCase = () => {
+  const refrigerant = REFRIGERANTS[Math.floor(Math.random() * REFRIGERANTS.length)];
+  const tRoom = Math.floor(Math.random() * 40) - 15; // -15°C a +25°C
+  const tEvap = tRoom - Math.floor(Math.random() * 30) - 5; // 5-35°C menos que tRoom
+
+  const C3 = tEvap + Math.floor(Math.random() * 10); // Min SP cerca de evaporación
+  const C2 = C3 + Math.floor(Math.random() * 20) + 5; // Max SP > Min SP
+  const C6 = Math.floor(Math.random() * 4); // 0-3
+  const C7 = Math.floor(Math.random() * 3); // 0-2 min
+  const C8 = Math.floor(Math.random() * 3); // 0-2 min
+  const d0 = Math.floor(Math.random() * 8) + 1; // 1-8 horas
+  const d1 = Math.floor(Math.random() * 25) + 10; // 10-35 min
+  const d4 = tEvap + Math.floor(Math.random() * 10); // Cerca de evaporación
+  const F0 = C2 - Math.floor(Math.random() * 10); // Cerca de max SP
+  const F3 = Math.floor(Math.random() * 2); // 0-1
+  const A1 = C2; // Igual a max SP
+  const A2 = C3 + Math.floor(Math.random() * 10) - 10; // Cerca de min SP
+  const A5 = Math.floor(Math.random() * 4); // 0-3 min
+
+  return {
+    refrigerant,
+    tRoom,
+    tEvap,
+    correct: { C2, C3, C6, C7, C8, d0, d1, d4, F0, F3, A1, A2, A5 }
+  };
 };
 
 const EXERCISE_LABELS = {
@@ -293,6 +323,7 @@ export default function AKOSimulator() {
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [studentName, setStudentName] = useState('');
   const [exerciseData, setExerciseData] = useState<any>(null);
+  const [randomCase, setRandomCase] = useState<any>(null);
   const [params, setParams] = useState(() => {
     const init: Record<string, number> = {};
     Object.keys(PARAM_CONFIG).forEach(k => init[k] = PARAM_CONFIG[k as keyof typeof PARAM_CONFIG].def);
@@ -322,18 +353,52 @@ export default function AKOSimulator() {
 
   const getMenuParams = (menu: string) => Object.keys(PARAM_CONFIG).filter(k => PARAM_CONFIG[k as keyof typeof PARAM_CONFIG].menu === menu);
 
+  // Helper para obtener el caso actual (normal o random)
+  const getCurrentCase = () => {
+    if (selectedCase === 'RANDOM' && randomCase) return randomCase;
+    return selectedCase ? CASES[selectedCase as keyof typeof CASES] : null;
+  };
+
   // Cargar datos del ejercicio
   useEffect(() => {
     if (selectedCase) {
-      fetch('/ejercicios.json')
-        .then(res => res.json())
-        .then(data => {
-          const caseExercise = data.find((ex: any) => ex.caso === selectedCase);
-          setExerciseData(caseExercise);
-        })
-        .catch(err => console.error('Error loading exercise data:', err));
+      if (selectedCase === 'RANDOM' && randomCase) {
+        // Generar datos de ejercicio para el caso random
+        const C6Text = randomCase.correct.C6 === 0 ? 'nunca' : randomCase.correct.C6 === 3 ? 'Siempre' : `${randomCase.correct.C7} min`;
+        const C7Text = randomCase.correct.C6 === 0 ? 'nunca' : randomCase.correct.C6 === 3 ? 'Siempre' : `${randomCase.correct.C8} min`;
+
+        const exerciseDataRandom = {
+          caso: 'RANDOM',
+          refrigerante: randomCase.refrigerant,
+          parametros: {
+            temperatura_recinto: `${randomCase.tRoom > 0 ? '+' : ''}${randomCase.tRoom}°C`,
+            temperatura_evaporacion: `${randomCase.tEvap}°C`,
+            temperatura_maxima_ajuste_sp: `${randomCase.correct.C2 > 0 ? '+' : ''}${randomCase.correct.C2}°C`,
+            temperatura_minima_ajuste_sp: `${randomCase.correct.C3 > 0 ? '+' : ''}${randomCase.correct.C3}°C`,
+            rele_cool_encendido_si_averia_sonda1: C6Text,
+            rele_cool_apagado_si_averia_sonda1: C7Text,
+            frecuencia_desescarche: randomCase.correct.d0 === 1 ? '1 hora' : `${randomCase.correct.d0} horas`,
+            tiempo_desescarche: `${randomCase.correct.d1} min`,
+            temperatura_finalizar_desescarche_anticipado: `${randomCase.correct.d4}°C`,
+            temperatura_paro_evaporadores: `${randomCase.correct.F0 > 0 ? '+' : ''}${randomCase.correct.F0}°C`,
+            ventiladores_en_marcha_durante_desescarche: randomCase.correct.F3 === 1 ? 'SI' : 'NO',
+            alarma_temperatura_maxima_sobre_sp: `${randomCase.correct.A1 > 0 ? '+' : ''}${randomCase.correct.A1}°C`,
+            alarma_temperatura_minima_debajo_sp_diff: `${randomCase.correct.A2 > 0 ? '+' : ''}${randomCase.correct.A2}°C`,
+            retardo_alarmas: randomCase.correct.A5 === 0 ? 'No retardo' : `${randomCase.correct.A5} min`
+          }
+        };
+        setExerciseData(exerciseDataRandom);
+      } else {
+        fetch('/ejercicios.json')
+          .then(res => res.json())
+          .then(data => {
+            const caseExercise = data.find((ex: any) => ex.caso === selectedCase);
+            setExerciseData(caseExercise);
+          })
+          .catch(err => console.error('Error loading exercise data:', err));
+      }
     }
-  }, [selectedCase]);
+  }, [selectedCase, randomCase]);
 
   // Efecto de parpadeo
   useEffect(() => {
@@ -576,8 +641,9 @@ export default function AKOSimulator() {
   };
 
   const calculateScore = () => {
-    if (!selectedCase) return { score: 0, total: 0, details: [], percentage: 0 };
-    const correct = CASES[selectedCase as keyof typeof CASES].correct;
+    const currentCase = getCurrentCase();
+    if (!selectedCase || !currentCase) return { score: 0, total: 0, details: [], percentage: 0 };
+    const correct = currentCase.correct;
     const details: ResultDetail[] = [];
     let score = 0;
     Object.keys(correct).forEach(param => {
@@ -599,6 +665,10 @@ export default function AKOSimulator() {
     setStandby(false);
     setFastFreeze(false);
     setDefrostActive(false);
+    if (selectedCase === 'RANDOM') {
+      setRandomCase(null);
+      setExerciseData(null);
+    }
   };
 
   // Pantalla de selección
@@ -615,7 +685,7 @@ export default function AKOSimulator() {
             <input type="text" value={studentName} onChange={e => setStudentName(e.target.value)} placeholder="Introduce tu nombre" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #374151', background: '#374151', color: 'white', boxSizing: 'border-box' }} />
           </div>
           <p style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '16px' }}>Selecciona un caso:</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '12px' }}>
             {Object.keys(CASES).map(c => (
               <button key={c} onClick={() => setSelectedCase(c)} style={{ background: '#374151', color: 'white', padding: '16px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{c}</div>
@@ -623,6 +693,13 @@ export default function AKOSimulator() {
               </button>
             ))}
           </div>
+          <button onClick={() => {
+            const newRandomCase = generateRandomCase();
+            setRandomCase(newRandomCase);
+            setSelectedCase('RANDOM');
+          }} style={{ width: '100%', background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)', color: 'white', padding: '14px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '12px', boxShadow: '0 4px 6px rgba(139, 92, 246, 0.3)' }}>
+            🎲 Caso Aleatorio
+          </button>
           <button onClick={() => window.open('/manual.pdf', '_blank')} style={{ width: '100%', background: '#2563eb', color: 'white', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             📖 Manual AKO-D14xxx
           </button>
@@ -632,7 +709,7 @@ export default function AKOSimulator() {
   }
 
   const results = calculateScore();
-  const caseData = CASES[selectedCase as keyof typeof CASES];
+  const caseData = getCurrentCase();
   const currentParamKey = mode === 'programming' && menuLevel >= 2 ? getMenuParams(MENUS[currentMenu])[currentParam] : null;
   const currentParamDesc = currentParamKey ? PARAM_CONFIG[currentParamKey as keyof typeof PARAM_CONFIG]?.desc : '';
 
@@ -658,7 +735,7 @@ export default function AKOSimulator() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <div>
             <span style={{ color: 'white', fontWeight: 'bold' }}>Caso {selectedCase}</span>
-            <span style={{ color: '#9ca3af', marginLeft: '8px', fontSize: '14px' }}>({caseData.refrigerant})</span>
+            <span style={{ color: '#9ca3af', marginLeft: '8px', fontSize: '14px' }}>({caseData?.refrigerant})</span>
           </div>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button onClick={() => window.open('/manual.pdf', '_blank')} style={{ background: '#2563eb', color: 'white', padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -669,13 +746,15 @@ export default function AKOSimulator() {
         </div>
 
         {/* Info del caso */}
-        <div style={{ background: 'rgba(30,41,59,0.7)', borderRadius: '8px', padding: '10px', marginBottom: '12px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', fontSize: '12px' }}>
-            <div><span style={{ color: '#9ca3af' }}>Refrigerante</span><br/><span style={{ color: 'white', fontWeight: 'bold' }}>{caseData.refrigerant}</span></div>
-            <div><span style={{ color: '#9ca3af' }}>Tª Recinto</span><br/><span style={{ color: 'white', fontWeight: 'bold' }}>{caseData.tRoom}°C</span></div>
-            <div><span style={{ color: '#9ca3af' }}>Tª Evaporación</span><br/><span style={{ color: 'white', fontWeight: 'bold' }}>{caseData.tEvap}°C</span></div>
+        {caseData && (
+          <div style={{ background: 'rgba(30,41,59,0.7)', borderRadius: '8px', padding: '10px', marginBottom: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', fontSize: '12px' }}>
+              <div><span style={{ color: '#9ca3af' }}>Refrigerante</span><br/><span style={{ color: 'white', fontWeight: 'bold' }}>{caseData.refrigerant}</span></div>
+              <div><span style={{ color: '#9ca3af' }}>Tª Recinto</span><br/><span style={{ color: 'white', fontWeight: 'bold' }}>{caseData.tRoom}°C</span></div>
+              <div><span style={{ color: '#9ca3af' }}>Tª Evaporación</span><br/><span style={{ color: 'white', fontWeight: 'bold' }}>{caseData.tEvap}°C</span></div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* TERMOSTATO AKO */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
@@ -845,7 +924,8 @@ export default function AKOSimulator() {
                 const paramCode = mapping.param;
                 const expectedValue = exerciseData.parametros[key];
                 const actualValue = params[paramCode];
-                const correctValue = CASES[selectedCase as keyof typeof CASES].correct[paramCode as keyof typeof CASES[keyof typeof CASES]['correct']];
+                const currentCase = getCurrentCase();
+                const correctValue = currentCase?.correct[paramCode as keyof typeof currentCase.correct];
                 const isCorrect = actualValue === correctValue;
 
                 return (
