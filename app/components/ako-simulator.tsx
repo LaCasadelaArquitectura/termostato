@@ -103,8 +103,13 @@ const PARAM_CONFIG = {
 
 const MENUS = ['rE', 'dEF', 'FAn', 'AL', 'CnF', 'tId'];
 
-const SevenSegment = ({ char, color = '#00ff00' }) => {
-  const segments = {
+interface SevenSegmentProps {
+  char: string;
+  color?: string;
+}
+
+const SevenSegment = ({ char, color = '#00ff00' }: SevenSegmentProps) => {
+  const segments: Record<string, string> = {
     '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc',
     '5': 'afgcd', '6': 'afgcde', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg',
     '-': 'g', ' ': '', 'A': 'abcefg', 'b': 'cdefg', 'C': 'adef', 'd': 'bcdeg',
@@ -128,7 +133,12 @@ const SevenSegment = ({ char, color = '#00ff00' }) => {
   );
 };
 
-const Display = ({ text, blink }) => {
+interface DisplayProps {
+  text: string | number;
+  blink: boolean;
+}
+
+const Display = ({ text, blink }: DisplayProps) => {
   const displayStr = String(text).slice(0, 4).padStart(4, ' ');
   return (
     <div style={{ opacity: blink ? 0.2 : 1, display: 'flex', gap: '2px', padding: '8px', background: '#000', borderRadius: '4px', transition: 'opacity 0.15s' }}>
@@ -137,7 +147,37 @@ const Display = ({ text, blink }) => {
   );
 };
 
-const ResultsScreen = ({ studentName, selectedCase, caseData, results, onClose }) => {
+interface ResultDetail {
+  param: string;
+  expected: number;
+  actual: number;
+  correct: boolean;
+  label: string;
+}
+
+interface Results {
+  score: number;
+  total: number;
+  details: ResultDetail[];
+  percentage: number;
+}
+
+interface CaseData {
+  refrigerant: string;
+  tRoom: number;
+  tEvap: number;
+  correct: Record<string, number>;
+}
+
+interface ResultsScreenProps {
+  studentName: string;
+  selectedCase: string;
+  caseData: CaseData;
+  results: Results;
+  onClose: () => void;
+}
+
+const ResultsScreen = ({ studentName, selectedCase, caseData, results, onClose }: ResultsScreenProps) => {
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'white', zIndex: 1000, overflow: 'auto' }}>
       <style>{`@media print { .no-print { display: none !important; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`}</style>
@@ -223,11 +263,11 @@ const ResultsScreen = ({ studentName, selectedCase, caseData, results, onClose }
 };
 
 export default function AKOSimulator() {
-  const [selectedCase, setSelectedCase] = useState(null);
+  const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [studentName, setStudentName] = useState('');
   const [params, setParams] = useState(() => {
-    const init = {};
-    Object.keys(PARAM_CONFIG).forEach(k => init[k] = PARAM_CONFIG[k].def);
+    const init: Record<string, number> = {};
+    Object.keys(PARAM_CONFIG).forEach(k => init[k] = PARAM_CONFIG[k as keyof typeof PARAM_CONFIG].def);
     return init;
   });
   
@@ -246,13 +286,13 @@ export default function AKOSimulator() {
   const [defrostActive, setDefrostActive] = useState(false);
   const [leds, setLeds] = useState({ eco: false, prg: false, fastFreeze: false, standby: false, fan: true, cool: true, aux: false, def: false, res: false });
   const [holdTime, setHoldTime] = useState(0);
-  const [activeButton, setActiveButton] = useState(null);
-  
-  const holdIntervalRef = useRef(null);
-  const startTimeRef = useRef(0);
-  const blinkIntervalRef = useRef(null);
+  const [activeButton, setActiveButton] = useState<string | null>(null);
 
-  const getMenuParams = (menu) => Object.keys(PARAM_CONFIG).filter(k => PARAM_CONFIG[k].menu === menu);
+  const holdIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef(0);
+  const blinkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const getMenuParams = (menu: string) => Object.keys(PARAM_CONFIG).filter(k => PARAM_CONFIG[k as keyof typeof PARAM_CONFIG].menu === menu);
 
   // Efecto de parpadeo
   useEffect(() => {
@@ -312,8 +352,8 @@ export default function AKOSimulator() {
     };
   }, []);
 
-  const applyWizardConfig = (appNum) => {
-    const config = WIZARD_APPS[appNum];
+  const applyWizardConfig = (appNum: number) => {
+    const config = WIZARD_APPS[appNum as keyof typeof WIZARD_APPS];
     if (config) {
       setParams(p => ({
         ...p,
@@ -327,7 +367,7 @@ export default function AKOSimulator() {
     }
   };
 
-  const handleButtonDown = (button) => {
+  const handleButtonDown = (button: string) => {
     if (standby && button !== 'down') return;
     
     setActiveButton(button);
@@ -342,35 +382,35 @@ export default function AKOSimulator() {
       
       if (button === 'esc' && mode === 'normal' && elapsed >= 5000) {
         setFastFreeze(f => !f);
-        clearInterval(holdIntervalRef.current);
+        if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
         setActiveButton(null);
         startTimeRef.current = 0;
       }
-      
+
       if (button === 'up' && mode === 'normal' && elapsed >= 5000) {
         setDefrostActive(d => !d);
-        clearInterval(holdIntervalRef.current);
+        if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
         setActiveButton(null);
         startTimeRef.current = 0;
       }
-      
+
       if (button === 'down' && mode === 'normal' && !standby && elapsed >= 5000) {
         setStandby(true);
-        clearInterval(holdIntervalRef.current);
+        if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
         setActiveButton(null);
         startTimeRef.current = 0;
       }
-      
+
       if (button === 'down' && standby && elapsed >= 2000) {
         setStandby(false);
-        clearInterval(holdIntervalRef.current);
+        if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
         setActiveButton(null);
         startTimeRef.current = 0;
       }
     }, 100);
   };
 
-  const handleButtonUp = (button) => {
+  const handleButtonUp = (button: string) => {
     const elapsed = Date.now() - startTimeRef.current;
     if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
     setHoldTime(0);
@@ -465,8 +505,8 @@ export default function AKOSimulator() {
         const menuParams = getMenuParams(MENUS[currentMenu]);
         const paramKey = menuParams[currentParam];
         if (paramKey) {
-          const cfg = PARAM_CONFIG[paramKey];
-          const step = cfg.step || 1;
+          const cfg = PARAM_CONFIG[paramKey as keyof typeof PARAM_CONFIG];
+          const step = ('step' in cfg ? cfg.step : 1) || 1;
           setEditValue(v => Math.min(cfg.max, Math.round((v + step) * 10) / 10));
         }
       }
@@ -486,8 +526,8 @@ export default function AKOSimulator() {
         const menuParams = getMenuParams(MENUS[currentMenu]);
         const paramKey = menuParams[currentParam];
         if (paramKey) {
-          const cfg = PARAM_CONFIG[paramKey];
-          const step = cfg.step || 1;
+          const cfg = PARAM_CONFIG[paramKey as keyof typeof PARAM_CONFIG];
+          const step = ('step' in cfg ? cfg.step : 1) || 1;
           setEditValue(v => Math.max(cfg.min, Math.round((v - step) * 10) / 10));
         }
       }
@@ -495,21 +535,21 @@ export default function AKOSimulator() {
   };
 
   const calculateScore = () => {
-    if (!selectedCase) return { score: 0, total: 0, details: [] };
-    const correct = CASES[selectedCase].correct;
-    const details = [];
+    if (!selectedCase) return { score: 0, total: 0, details: [], percentage: 0 };
+    const correct = CASES[selectedCase as keyof typeof CASES].correct;
+    const details: ResultDetail[] = [];
     let score = 0;
     Object.keys(correct).forEach(param => {
-      const isCorrect = params[param] === correct[param];
+      const isCorrect = params[param] === (correct as any)[param];
       if (isCorrect) score++;
-      details.push({ param, expected: correct[param], actual: params[param], correct: isCorrect, label: EXERCISE_LABELS[param] });
+      details.push({ param, expected: (correct as any)[param], actual: params[param], correct: isCorrect, label: (EXERCISE_LABELS as any)[param] });
     });
     return { score, total: Object.keys(correct).length, details, percentage: Math.round((score / Object.keys(correct).length) * 100) };
   };
 
   const resetSimulator = () => {
-    const init = {};
-    Object.keys(PARAM_CONFIG).forEach(k => init[k] = PARAM_CONFIG[k].def);
+    const init: Record<string, number> = {};
+    Object.keys(PARAM_CONFIG).forEach(k => init[k] = PARAM_CONFIG[k as keyof typeof PARAM_CONFIG].def);
     setParams(init);
     setMode('normal');
     setWizardApp(1);
@@ -538,7 +578,7 @@ export default function AKOSimulator() {
             {Object.keys(CASES).map(c => (
               <button key={c} onClick={() => setSelectedCase(c)} style={{ background: '#374151', color: 'white', padding: '16px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{c}</div>
-                <div style={{ fontSize: '11px', color: '#9ca3af' }}>{CASES[c].refrigerant}</div>
+                <div style={{ fontSize: '11px', color: '#9ca3af' }}>{CASES[c as keyof typeof CASES].refrigerant}</div>
               </button>
             ))}
           </div>
@@ -548,9 +588,9 @@ export default function AKOSimulator() {
   }
 
   const results = calculateScore();
-  const caseData = CASES[selectedCase];
+  const caseData = CASES[selectedCase as keyof typeof CASES];
   const currentParamKey = mode === 'programming' && menuLevel >= 2 ? getMenuParams(MENUS[currentMenu])[currentParam] : null;
-  const currentParamDesc = currentParamKey ? PARAM_CONFIG[currentParamKey]?.desc : '';
+  const currentParamDesc = currentParamKey ? PARAM_CONFIG[currentParamKey as keyof typeof PARAM_CONFIG]?.desc : '';
 
   const getSetIndicator = () => {
     if (activeButton !== 'set' || mode !== 'normal') return null;
@@ -653,39 +693,39 @@ export default function AKOSimulator() {
                 {/* Botones 2x2 */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '5px' }}>
                   {/* ESC */}
-                  <button 
-                    onPointerDown={(e) => { e.preventDefault(); e.target.setPointerCapture(e.pointerId); handleButtonDown('esc'); }}
-                    onPointerUp={(e) => { e.target.releasePointerCapture(e.pointerId); handleButtonUp('esc'); }}
-                    onPointerCancel={(e) => { e.target.releasePointerCapture(e.pointerId); handleButtonUp('esc'); }}
+                  <button
+                    onPointerDown={(e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); handleButtonDown('esc'); }}
+                    onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); handleButtonUp('esc'); }}
+                    onPointerCancel={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); handleButtonUp('esc'); }}
                     style={{ width: '46px', height: '46px', background: activeButton === 'esc' ? '#555' : 'linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 100%)', border: '1px solid #555', borderRadius: '6px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', transform: activeButton === 'esc' ? 'scale(0.95)' : 'scale(1)', touchAction: 'none', userSelect: 'none' }}>
                     <span style={{ color: '#fff', fontSize: '9px', fontWeight: 'bold', pointerEvents: 'none' }}>ESC</span>
                     <span style={{ color: '#888', fontSize: '8px', pointerEvents: 'none' }}>%</span>
                   </button>
                   
                   {/* UP */}
-                  <button 
-                    onPointerDown={(e) => { e.preventDefault(); e.target.setPointerCapture(e.pointerId); handleButtonDown('up'); }}
-                    onPointerUp={(e) => { e.target.releasePointerCapture(e.pointerId); handleButtonUp('up'); }}
-                    onPointerCancel={(e) => { e.target.releasePointerCapture(e.pointerId); handleButtonUp('up'); }}
+                  <button
+                    onPointerDown={(e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); handleButtonDown('up'); }}
+                    onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); handleButtonUp('up'); }}
+                    onPointerCancel={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); handleButtonUp('up'); }}
                     style={{ width: '46px', height: '46px', background: activeButton === 'up' ? '#555' : 'linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 100%)', border: '1px solid #555', borderRadius: '6px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', transform: activeButton === 'up' ? 'scale(0.95)' : 'scale(1)', touchAction: 'none', userSelect: 'none' }}>
                     <span style={{ color: '#fff', fontSize: '14px', pointerEvents: 'none' }}>▲</span>
                     <span style={{ color: '#888', fontSize: '8px', pointerEvents: 'none' }}>H</span>
                   </button>
                   
                   {/* SET */}
-                  <button 
-                    onPointerDown={(e) => { e.preventDefault(); e.target.setPointerCapture(e.pointerId); handleButtonDown('set'); }}
-                    onPointerUp={(e) => { e.target.releasePointerCapture(e.pointerId); handleButtonUp('set'); }}
-                    onPointerCancel={(e) => { e.target.releasePointerCapture(e.pointerId); handleButtonUp('set'); }}
+                  <button
+                    onPointerDown={(e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); handleButtonDown('set'); }}
+                    onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); handleButtonUp('set'); }}
+                    onPointerCancel={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); handleButtonUp('set'); }}
                     style={{ width: '46px', height: '46px', background: activeButton === 'set' ? '#555' : 'linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 100%)', border: '1px solid #555', borderRadius: '6px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', transform: activeButton === 'set' ? 'scale(0.95)' : 'scale(1)', touchAction: 'none', userSelect: 'none' }}>
                     <span style={{ color: '#fff', fontSize: '10px', fontWeight: 'bold', pointerEvents: 'none' }}>SET</span>
                   </button>
                   
                   {/* DOWN */}
-                  <button 
-                    onPointerDown={(e) => { e.preventDefault(); e.target.setPointerCapture(e.pointerId); handleButtonDown('down'); }}
-                    onPointerUp={(e) => { e.target.releasePointerCapture(e.pointerId); handleButtonUp('down'); }}
-                    onPointerCancel={(e) => { e.target.releasePointerCapture(e.pointerId); handleButtonUp('down'); }}
+                  <button
+                    onPointerDown={(e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); handleButtonDown('down'); }}
+                    onPointerUp={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); handleButtonUp('down'); }}
+                    onPointerCancel={(e) => { e.currentTarget.releasePointerCapture(e.pointerId); handleButtonUp('down'); }}
                     style={{ width: '46px', height: '46px', background: activeButton === 'down' ? '#555' : 'linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 100%)', border: '1px solid #555', borderRadius: '6px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.3)', transform: activeButton === 'down' ? 'scale(0.95)' : 'scale(1)', touchAction: 'none', userSelect: 'none' }}>
                     <span style={{ color: '#fff', fontSize: '14px', pointerEvents: 'none' }}>▼</span>
                     <span style={{ color: '#888', fontSize: '8px', pointerEvents: 'none' }}>⏻</span>
@@ -722,7 +762,7 @@ export default function AKOSimulator() {
           {mode === 'wizard' && (
             <div style={{ background: 'rgba(37,99,235,0.3)', padding: '8px', borderRadius: '8px' }}>
               <span style={{ color: '#93c5fd', fontWeight: 'bold' }}>🔧 MODO WIZARD - Selecciona aplicación</span><br/>
-              <span style={{ color: '#60a5fa' }}>{wizardApp}: {WIZARD_APPS[wizardApp].name}</span><br/>
+              <span style={{ color: '#60a5fa' }}>{wizardApp}: {WIZARD_APPS[wizardApp as keyof typeof WIZARD_APPS].name}</span><br/>
               <span style={{ color: '#9ca3af', fontSize: '10px' }}>▲▼ cambiar | SET confirmar</span>
             </div>
           )}
@@ -749,9 +789,9 @@ export default function AKOSimulator() {
             <button onClick={resetSimulator} style={{ background: '#dc2626', color: 'white', padding: '3px 8px', borderRadius: '4px', border: 'none', cursor: 'pointer', fontSize: '10px' }}>Reset</button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px', fontSize: '11px' }}>
-            {Object.keys(CASES[selectedCase].correct).map(k => (
+            {Object.keys(CASES[selectedCase as keyof typeof CASES].correct).map(k => (
               <div key={k} style={{ background: 'rgba(55,65,81,0.5)', borderRadius: '4px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#d1d5db' }}>{EXERCISE_LABELS[k]}</span>
+                <span style={{ color: '#d1d5db' }}>{(EXERCISE_LABELS as any)[k]}</span>
                 <span style={{ color: 'white', fontFamily: 'monospace', fontSize: '16px', fontWeight: 'bold', minWidth: '40px', textAlign: 'right' }}>{params[k]}</span>
               </div>
             ))}
