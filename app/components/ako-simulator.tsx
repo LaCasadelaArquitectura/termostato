@@ -574,13 +574,21 @@ export default function AKOSimulator() {
             <input type="text" value={studentName} onChange={e => setStudentName(e.target.value)} placeholder="Introduce tu nombre" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #374151', background: '#374151', color: 'white', boxSizing: 'border-box' }} />
           </div>
           <p style={{ color: '#9ca3af', textAlign: 'center', marginBottom: '16px' }}>Selecciona un caso:</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
             {Object.keys(CASES).map(c => (
               <button key={c} onClick={() => setSelectedCase(c)} style={{ background: '#374151', color: 'white', padding: '16px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{c}</div>
                 <div style={{ fontSize: '11px', color: '#9ca3af' }}>{CASES[c as keyof typeof CASES].refrigerant}</div>
               </button>
             ))}
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => window.open('/manual.pdf', '_blank')} style={{ flex: 1, background: '#2563eb', color: 'white', padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              📖 Manual AKO-D14xxx
+            </button>
+            <button onClick={() => window.open('/ejercicio.pdf', '_blank')} style={{ flex: 1, background: '#16a34a', color: 'white', padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              📝 Ejercicio
+            </button>
           </div>
         </div>
       </div>
@@ -616,7 +624,12 @@ export default function AKOSimulator() {
             <span style={{ color: 'white', fontWeight: 'bold' }}>Caso {selectedCase}</span>
             <span style={{ color: '#9ca3af', marginLeft: '8px', fontSize: '14px' }}>({caseData.refrigerant})</span>
           </div>
-          <button onClick={() => { setSelectedCase(null); resetSimulator(); }} style={{ background: '#374151', color: 'white', padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px' }}>Cambiar</button>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button onClick={() => window.open('/manual.pdf', '_blank')} style={{ background: '#2563eb', color: 'white', padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              📖 Manual
+            </button>
+            <button onClick={() => { setSelectedCase(null); resetSimulator(); }} style={{ background: '#374151', color: 'white', padding: '4px 10px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px' }}>Cambiar</button>
+          </div>
         </div>
 
         {/* Info del caso */}
