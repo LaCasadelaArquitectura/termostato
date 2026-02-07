@@ -1,0 +1,122 @@
+[
+  {
+    "caso": "A",
+    "refrigerante": "R-407c",
+    "parametros": {
+      "temperatura_recinto": "+24°C",
+      "temperatura_evaporacion": "0°C",
+      "temperatura_maxima_ajuste_sp": "+30°C",
+      "temperatura_minima_ajuste_sp": "+15°C",
+      "rele_cool_encendido_si_averia_sonda1": "1 min",
+      "rele_cool_apagado_si_averia_sonda1": "2 min",
+      "frecuencia_desescarche": "2 horas",
+      "tiempo_desescarche": "10 min",
+      "temperatura_paro_evaporadores": "+30°C",
+      "ventiladores_en_marcha_durante_desescarche": "SI",
+      "temperatura_finalizar_desescarche_anticipado": "5°C",
+      "alarma_temperatura_maxima_sobre_sp": "+30°C",
+      "alarma_temperatura_minima_debajo_sp_diff": "0°C",
+      "retardo_alarmas": "1 min"
+    }
+  },
+  {
+    "caso": "B",
+    "refrigerante": "R-32",
+    "parametros": {
+      "temperatura_recinto": "+22°C",
+      "temperatura_evaporacion": "-10°C",
+      "temperatura_maxima_ajuste_sp": "+25°C",
+      "temperatura_minima_ajuste_sp": "+20°C",
+      "rele_cool_encendido_si_averia_sonda1": "1 min",
+      "rele_cool_apagado_si_averia_sonda1": "1 min",
+      "frecuencia_desescarche": "1 hora",
+      "tiempo_desescarche": "15 min",
+      "temperatura_paro_evaporadores": "+25°C",
+      "ventiladores_en_marcha_durante_desescarche": "NO",
+      "temperatura_finalizar_desescarche_anticipado": "0°C",
+      "alarma_temperatura_maxima_sobre_sp": "+25°C",
+      "alarma_temperatura_minima_debajo_sp_diff": "-10°C",
+      "retardo_alarmas": "2 min"
+    }
+  },
+  {
+    "caso": "C",
+    "refrigerante": "R-410A",
+    "parametros": {
+      "temperatura_recinto": "+2°C",
+      "temperatura_evaporacion": "-20°C",
+      "temperatura_maxima_ajuste_sp": "+5°C",
+      "temperatura_minima_ajuste_sp": "-5°C",
+      "rele_cool_encendido_si_averia_sonda1": "nunca",
+      "rele_cool_apagado_si_averia_sonda1": "Siempre",
+      "frecuencia_desescarche": "5 horas",
+      "tiempo_desescarche": "30 min",
+      "temperatura_paro_evaporadores": "+5°C",
+      "ventiladores_en_marcha_durante_desescarche": "SI",
+      "temperatura_finalizar_desescarche_anticipado": "-5°C",
+      "alarma_temperatura_maxima_sobre_sp": "+5°C",
+      "alarma_temperatura_minima_debajo_sp_diff": "-20°C",
+      "retardo_alarmas": "1 min"
+    }
+  },
+  {
+    "caso": "D",
+    "refrigerante": "R-134a",
+    "parametros": {
+      "temperatura_recinto": "+8°C",
+      "temperatura_evaporacion": "+5°C",
+      "temperatura_maxima_ajuste_sp": "+15°C",
+      "temperatura_minima_ajuste_sp": "0°C",
+      "rele_cool_encendido_si_averia_sonda1": "Siempre",
+      "rele_cool_apagado_si_averia_sonda1": "nunca",
+      "frecuencia_desescarche": "4 horas",
+      "tiempo_desescarche": "20 min",
+      "temperatura_paro_evaporadores": "+15°C",
+      "ventiladores_en_marcha_durante_desescarche": "SI",
+      "temperatura_finalizar_desescarche_anticipado": "0°C",
+      "alarma_temperatura_maxima_sobre_sp": "+15°C",
+      "alarma_temperatura_minima_debajo_sp_diff": "+5°C",
+      "retardo_alarmas": "3 min"
+    }
+  },
+  {
+    "caso": "E",
+    "refrigerante": "R-290",
+    "parametros": {
+      "temperatura_recinto": "-10°C",
+      "temperatura_evaporacion": "-25°C",
+      "temperatura_maxima_ajuste_sp": "0°C",
+      "temperatura_minima_ajuste_sp": "-20°C",
+      "rele_cool_encendido_si_averia_sonda1": "2 min",
+      "rele_cool_apagado_si_averia_sonda1": "1 min",
+      "frecuencia_desescarche": "3 horas",
+      "tiempo_desescarche": "25 min",
+      "temperatura_paro_evaporadores": "0°C",
+      "ventiladores_en_marcha_durante_desescarche": "NO",
+      "temperatura_finalizar_desescarche_anticipado": "-15°C",
+      "alarma_temperatura_maxima_sobre_sp": "0°C",
+      "alarma_temperatura_minima_debajo_sp_diff": "-25°C",
+      "retardo_alarmas": "No retardo"
+    }
+  },
+  {
+    "caso": "F",
+    "refrigerante": "R-134a",
+    "parametros": {
+      "temperatura_recinto": "+15°C",
+      "temperatura_evaporacion": "0°C",
+      "temperatura_maxima_ajuste_sp": "+20°C",
+      "temperatura_minima_ajuste_sp": "+10°C",
+      "rele_cool_encendido_si_averia_sonda1": "1 min",
+      "rele_cool_apagado_si_averia_sonda1": "1 min",
+      "frecuencia_desescarche": "2 horas",
+      "tiempo_desescarche": "15 min",
+      "temperatura_paro_evaporadores": "+20°C",
+      "ventiladores_en_marcha_durante_desescarche": "NO",
+      "temperatura_finalizar_desescarche_anticipado": "10°C",
+      "alarma_temperatura_maxima_sobre_sp": "+20°C",
+      "alarma_temperatura_minima_debajo_sp_diff": "0°C",
+      "retardo_alarmas": "No retardo"
+    }
+  }
+]

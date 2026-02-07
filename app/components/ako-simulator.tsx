@@ -27,6 +27,33 @@ const EXERCISE_LABELS = {
   A5: 'Retardos de alarmas caso que salten'
 };
 
+// Mapeo de claves del ejercicio JSON a códigos de parámetros
+const EXERCISE_PARAM_MAP: Record<string, { param: string; label: string; format: (value: any, expected: string) => string }> = {
+  'temperatura_maxima_ajuste_sp': { param: 'C2', label: 'Tª máxima ajuste SP', format: (v) => `${v}°C` },
+  'temperatura_minima_ajuste_sp': { param: 'C3', label: 'Tª mínima ajuste SP', format: (v) => `${v}°C` },
+  'rele_cool_encendido_si_averia_sonda1': { param: 'C7', label: 'Relé COOL ON si avería sonda', format: (v, exp) => {
+    if (exp === 'nunca') return v === 0 ? 'Nunca (0 min)' : `${v} min`;
+    if (exp === 'Siempre') return v === 0 ? 'Siempre (0 min)' : `${v} min`;
+    return `${v} min`;
+  }},
+  'rele_cool_apagado_si_averia_sonda1': { param: 'C8', label: 'Relé COOL OFF si avería sonda', format: (v, exp) => {
+    if (exp === 'nunca') return v === 0 ? 'Nunca (0 min)' : `${v} min`;
+    if (exp === 'Siempre') return v === 0 ? 'Siempre (0 min)' : `${v} min`;
+    return `${v} min`;
+  }},
+  'frecuencia_desescarche': { param: 'd0', label: 'Frecuencia desescarche', format: (v) => v === 1 ? `${v} hora` : `${v} horas` },
+  'tiempo_desescarche': { param: 'd1', label: 'Tiempo desescarche', format: (v) => `${v} min` },
+  'temperatura_finalizar_desescarche_anticipado': { param: 'd4', label: 'Tª fin desescarche anticipado', format: (v) => `${v}°C` },
+  'temperatura_paro_evaporadores': { param: 'F0', label: 'Tª paro evaporadores', format: (v) => `${v}°C` },
+  'ventiladores_en_marcha_durante_desescarche': { param: 'F3', label: 'Ventiladores durante desescarche', format: (v) => v === 1 ? 'SÍ' : 'NO' },
+  'alarma_temperatura_maxima_sobre_sp': { param: 'A1', label: 'Alarma Tª máxima sobre SP', format: (v) => `${v}°C` },
+  'alarma_temperatura_minima_debajo_sp_diff': { param: 'A2', label: 'Alarma Tª mínima bajo SP-diff', format: (v) => `${v}°C` },
+  'retardo_alarmas': { param: 'A5', label: 'Retardo alarmas', format: (v, exp) => {
+    if (exp === 'No retardo') return v === 0 ? 'No retardo (0 min)' : `${v} min`;
+    return `${v} min`;
+  }}
+};
+
 const WIZARD_APPS = {
   1: { name: 'Producto variado', SP: 2, d0: 4, d1: 20, F0: 8, F3: 1, P0: 0 },
   2: { name: 'Congelados', SP: -18, d0: 4, d1: 20, F0: 0, F3: 0, P0: 0 },
@@ -265,6 +292,7 @@ const ResultsScreen = ({ studentName, selectedCase, caseData, results, onClose }
 export default function AKOSimulator() {
   const [selectedCase, setSelectedCase] = useState<string | null>(null);
   const [studentName, setStudentName] = useState('');
+  const [exerciseData, setExerciseData] = useState<any>(null);
   const [params, setParams] = useState(() => {
     const init: Record<string, number> = {};
     Object.keys(PARAM_CONFIG).forEach(k => init[k] = PARAM_CONFIG[k as keyof typeof PARAM_CONFIG].def);
@@ -293,6 +321,19 @@ export default function AKOSimulator() {
   const blinkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const getMenuParams = (menu: string) => Object.keys(PARAM_CONFIG).filter(k => PARAM_CONFIG[k as keyof typeof PARAM_CONFIG].menu === menu);
+
+  // Cargar datos del ejercicio
+  useEffect(() => {
+    if (selectedCase) {
+      fetch('/ejercicios.json')
+        .then(res => res.json())
+        .then(data => {
+          const caseExercise = data.find((ex: any) => ex.caso === selectedCase);
+          setExerciseData(caseExercise);
+        })
+        .catch(err => console.error('Error loading exercise data:', err));
+    }
+  }, [selectedCase]);
 
   // Efecto de parpadeo
   useEffect(() => {
@@ -582,14 +623,9 @@ export default function AKOSimulator() {
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => window.open('/manual.pdf', '_blank')} style={{ flex: 1, background: '#2563eb', color: 'white', padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-              📖 Manual AKO-D14xxx
-            </button>
-            <button onClick={() => window.open('/ejercicio.pdf', '_blank')} style={{ flex: 1, background: '#16a34a', color: 'white', padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-              📝 Ejercicio
-            </button>
-          </div>
+          <button onClick={() => window.open('/manual.pdf', '_blank')} style={{ width: '100%', background: '#2563eb', color: 'white', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+            📖 Manual AKO-D14xxx
+          </button>
         </div>
       </div>
     );
@@ -801,14 +837,40 @@ export default function AKOSimulator() {
             <span style={{ color: 'white', fontSize: '13px', fontWeight: 'bold' }}>Parámetros del ejercicio</span>
             <button onClick={resetSimulator} style={{ background: '#dc2626', color: 'white', padding: '3px 8px', borderRadius: '4px', border: 'none', cursor: 'pointer', fontSize: '10px' }}>Reset</button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px', fontSize: '11px' }}>
-            {Object.keys(CASES[selectedCase as keyof typeof CASES].correct).map(k => (
-              <div key={k} style={{ background: 'rgba(55,65,81,0.5)', borderRadius: '4px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#d1d5db' }}>{(EXERCISE_LABELS as any)[k]}</span>
-                <span style={{ color: 'white', fontFamily: 'monospace', fontSize: '16px', fontWeight: 'bold', minWidth: '40px', textAlign: 'right' }}>{params[k]}</span>
-              </div>
-            ))}
-          </div>
+
+          {exerciseData && exerciseData.parametros ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px', fontSize: '10px' }}>
+              {Object.keys(exerciseData.parametros).filter(key => EXERCISE_PARAM_MAP[key]).map(key => {
+                const mapping = EXERCISE_PARAM_MAP[key];
+                const paramCode = mapping.param;
+                const expectedValue = exerciseData.parametros[key];
+                const actualValue = params[paramCode];
+                const correctValue = CASES[selectedCase as keyof typeof CASES].correct[paramCode as keyof typeof CASES[keyof typeof CASES]['correct']];
+                const isCorrect = actualValue === correctValue;
+
+                return (
+                  <div key={key} style={{ background: isCorrect ? 'rgba(34,197,94,0.15)' : 'rgba(55,65,81,0.5)', borderRadius: '4px', padding: '6px 10px', border: isCorrect ? '1px solid rgba(34,197,94,0.3)' : '1px solid transparent' }}>
+                    <div style={{ color: '#9ca3af', fontSize: '9px', marginBottom: '2px' }}>{mapping.label}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ color: '#60a5fa', fontSize: '8px', marginBottom: '1px' }}>Esperado:</div>
+                        <div style={{ color: '#93c5fd', fontWeight: 'bold', fontSize: '11px' }}>{expectedValue}</div>
+                      </div>
+                      <div style={{ fontSize: '16px' }}>{isCorrect ? '✓' : '→'}</div>
+                      <div style={{ flex: 1, textAlign: 'right' }}>
+                        <div style={{ color: isCorrect ? '#4ade80' : '#f87171', fontSize: '8px', marginBottom: '1px' }}>Configurado:</div>
+                        <div style={{ color: isCorrect ? '#22c55e' : '#ef4444', fontWeight: 'bold', fontSize: '11px', fontFamily: 'monospace' }}>
+                          {mapping.format(actualValue, expectedValue)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ color: '#9ca3af', textAlign: 'center', padding: '10px' }}>Cargando parámetros del ejercicio...</div>
+          )}
         </div>
 
         {/* Botones de acción */}
